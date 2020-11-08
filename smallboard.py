@@ -7,6 +7,7 @@ Description: Implements a class to keep track of a basic tic-tac-toe game.
 '''
 
 from itertools import chain
+from random import choice
 
 class SmallBoard(object):
     def __init__(self):
@@ -61,3 +62,8 @@ class SmallBoard(object):
 
     def get_board(self):
         return self._board
+
+
+    def find_ai_move(self, players, active):
+        assert not self.is_over()
+        return choice(self.get_empty())

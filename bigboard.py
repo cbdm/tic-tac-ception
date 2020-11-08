@@ -7,7 +7,7 @@ Description: Implements the logic for the Tic-Tac-Ception game and a basic termi
 '''
 
 from smallboard import SmallBoard
-from random import randint
+from random import randint, choice
 from itertools import chain
 from jsonpickle import encode, decode
 
@@ -55,6 +55,16 @@ class BigBoard(object):
                 self._find_possible_moves(move_x, move_y)
             else:
                 self._possible_moves = {}
+
+    
+    def find_ai_move(self):
+        assert self._possible_moves
+        
+        small = int(choice(list(self._possible_moves)))
+        row, col = small//3, small%3
+        x, y = self._board[row][col].find_ai_move(self._players, self._turn)
+        
+        return row, col, x, y
 
 
     def is_choosing(self):

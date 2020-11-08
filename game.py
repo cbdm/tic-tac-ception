@@ -86,6 +86,17 @@ def play(board_row, board_col, row, col):
             turn = 'O' if board.get_turn() == 'X' else 'X'
         
         session['board'] = board.to_json()
+    
+    return redirect(url_for('game'))
+
+
+@app.route('/make-ai-move')
+def make_ai_move():
+    if 'board' in session:
+        board = BigBoard.from_json(session['board'])
+        b_row, b_col, s_row, s_col = board.find_ai_move()
+        return play(b_row, b_col, s_row, s_col)
+
     return redirect(url_for('game'))
 
 
