@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% endblock %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content_title %} Tic-Tac-Ception {% endblock %}
+
+{% block content %}
+
+<img src="{{url_for('static', filename='Tic-Tac-Ception_Logo.png')}}" align="left" width="250px" height="200px" style="vertical-align:middle;margin:0px 0px" />
+
+This is a game of Tic-Tac-Toes within a Tic-Tac-Toe! Check out the <a href="{{ url_for('game_rules') }}"> Game Rules </a> to learn how to play.
+You can always go back to your current game by clicking on <a href="{{ url_for('game') }}">Active Game</a> at the top of the page.
+
+<center>
+<h2>Start a new game</h2>
+<a href="{{ url_for('start_2P_game') }}" class="btn btn-default">Local 2-Player Game</a>
+<a href="{{ url_for('start_ai_game') }}" class="btn btn-default">Play the AI</a>
+<br/>
+</center>
+<br/>
+<b>Attention:</b> Starting a new game will delete the active game! You can go back to your active game <a href="{{ url_for('game') }}">here</a>.
+{% endblock %}

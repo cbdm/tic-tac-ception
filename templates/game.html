@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %} | Active Game{% endblock %}
+
 {% block content_title %}
 Game Board: 
 
@@ -71,5 +73,5 @@ Game Board:
 <a href="{{ url_for('make_ai_move') }}" class="btn btn-default">Make Random Move</a>
 <a href="{{ url_for('save_game') }}" class="btn btn-default">Save Game</a>
 <a href="{{ url_for('load_game') }}" class="btn btn-default">Load Game</a>
-<a href="{{ url_for('restart_game') }}" class="btn btn-default">Restart Game</a>
+<a href="{{ url_for('clear_board') }}" class="btn btn-default">Clear Board</a>
 {% endblock %}

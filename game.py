@@ -9,27 +9,37 @@ app.secret_key = b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\x
 
 @app.route('/')
 def index():
-    return redirect(url_for('game'))
+    return render_template('index.html')
 
 
 @app.route('/game')
 def game():
     if 'board' not in session:
         session['board'] = BigBoard().to_json()
+    if 'ai' not in session:
+        session['ai'] = False
 
     board = BigBoard.from_json(session['board'])
 
     if board.is_over():
         return render_template('game-over.html', board=board.get_board(), winner=board.check_winner())
+    elif session['ai'] and board.get_turn() == 'O':
+        return make_ai_move()
     else:
         return render_template('game.html', board=board.get_board(), turn=board.get_turn(),
                                             valid=board.get_valid_moves(), choice=board.is_choosing())
 
 
-@app.route('/new-game')
-def restart_game():
-    session['board'] = BigBoard().to_json()
-    return redirect(url_for('game'))
+@app.route('/start-2P-game')
+def start_2P_game():
+    session['ai'] = False
+    return clear_board()
+
+
+@app.route('/start-ai-game')
+def start_ai_game():
+    session['ai'] = True
+    return clear_board()
 
 
 @app.route('/save-game')
@@ -38,7 +48,8 @@ def save_game():
 
         moves = BigBoard.from_json(session['board']).get_move_history()
         if moves:
-            export = {'start': moves[0][0],
+            export = {'ai': session['ai'] if 'ai' in session else False,
+                      'start': moves[0][0],
                       'moves': [(b_r, b_c, s_r, s_c) for (_, b_r, b_c, s_r, s_c) in moves]}
             
             response = make_response(dumps(export))
@@ -59,6 +70,7 @@ def load_game():
         try:
             if str(request.referrer).replace(request.host_url, '').startswith('load-game'):
                 data = load(request.files['game_json'])
+                session['ai'] = data['ai'] if 'ai' in data else False
                 new_game = BigBoard()
                 new_game._turn = data['start']
                 for move in data['moves']:
@@ -69,6 +81,12 @@ def load_game():
             message = 'Could not load the game.'
             flash(message, 'danger')
 
+    return redirect(url_for('game'))
+
+
+@app.route('/clear-board')
+def clear_board():
+    session['board'] = BigBoard().to_json()
     return redirect(url_for('game'))
 
 
