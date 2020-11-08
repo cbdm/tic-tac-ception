@@ -67,7 +67,6 @@ def load_game():
                 session['board'] = new_game.to_json()
         except:
             message = 'Could not load the game.'
-            print(message)
             flash(message, 'danger')
 
     return redirect(url_for('game'))
