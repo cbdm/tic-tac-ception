@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %} | Rules{% endblock %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content_title %} Game Rules {% endblock %}
+
+{% block content %}
+
+This is a game of Tic-Tac-Toes within a Tic-Tac-Toe!  
+
+<h2> How to play <h2>
+<h3> Basic flow </h3>
+The starting player can make the first move anywhere. After that, the following player needs to play on the board that corresponds to the previous move.<br/>
+Sample start of a game:
+<ol>
+  <li>X starts by playing on the center-board, in the <b>top-right</b> position;</li>
+  <li>The next move should be played on the <b>top-right</b> board, in any open position. O plays in the top-right board, on the <b>bottom-left</b> position;</li>
+  <li>X now needs to play on the <b>bottom-left</b> board, in any open position.</li>
+</ol>
+
+<h3> What happens when a small board is over? </h3>
+A small board can end because (1) a player won, or (2) there are no open positions. When a small board is over, a different set of rules applies on the move restriction.
+<ol>
+  <li>X is next to play, and should have played in a small board that X won -> X can play in any open position;</li>
+  <li>X is next to play, and should have played in a small board that tied -> X can play in any open position;</li>
+  <li>X is next to play, and should have played in a small board that <b>O</b> won -> <b>O</b> can choose any small board that's not over for X to play.</li>
+</ol>
+
+<h3> How does it end? </h3>
+Like a regular tic-tac-toe, the game ends when there is (1) a winner or (2) all small boards are over.
+<ol>
+  <li>The regular rules apply -- you need to win three straight small boards (any row, column, or diagonal) to win;</li>
+  <li>The winner will be the player with most small board wons. If tied, then the game ends in a draw.</li>
+</ol>
+
+{% endblock %}

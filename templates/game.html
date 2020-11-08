@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content_title %}
+Game Board: 
+
+{% if choice %}
+    {{ turn }}, please choose a small board for your opponent to play next.
+  {% else %}
+    {{ turn }}'s turn to play.
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:15px 30px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:center;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:15px 100px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:center;}
+</style>
+<table class="tg">
+  {% for x in range(3) %}
+    <tr>
+      {% for y in range(3) %}
+        {% if board[x][y].check_winner() %}
+          <th><h1>{{ board[x][y].check_winner() }}</h1></center></th>
+        {% else %}
+          <td>
+            <table>
+              {% for i in range(3) %}
+                <tr>
+                  {% for j in range(3) %}
+                    <td>
+                      {% if board[x][y].get_board()[i][j] %}
+                        {{ board[x][y].get_board()[i][j] }}
+                      {% elif (x,y) in valid and (i,j) in valid[x,y] and not choice %}
+                        <a href="{{url_for('play', board_row=x, board_col=y, row=i, col=j) }}">Play {{ turn }}</a>
+                      {% else %}
+                        _
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </table>
+            {% if choice %}
+              <a href="{{url_for('play', board_row=x, board_col=y, row=0, col=0) }}">Choose this (
+              {% if x == 0 %}
+                top
+              {% elif x == 1 %}
+                middle
+              {% else %}
+                bottom
+              {% endif %}
+              {% if y == 0 %}
+                left
+              {% elif y == 1 %}
+                center
+              {% else %}
+                right
+              {% endif %}
+              )</a>
+            {% endif %}
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+<br/>
+<a href="{{ url_for('restart_game') }}" class="btn btn-default">Restart Game</a>
+<a href="{{ url_for('save_game') }}" class="btn btn-default">Save Game</a>
+<a href="{{ url_for('load_game') }}" class="btn btn-default">Load Game</a>
+{% endblock %}
