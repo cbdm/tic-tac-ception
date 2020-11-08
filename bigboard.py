@@ -2,22 +2,23 @@
 
 Author: Caio Batista de Melo
 Date Created: 2020-11-06
-Date Modified: 2020-11-07
+Date Modified: 2020-11-08
 Description: Implements the logic for the Tic-Tac-Ception game and a basic terminal interface.
 '''
 
 from smallboard import SmallBoard
 from random import randint
 from itertools import chain
+from jsonpickle import encode, decode
 
 class BigBoard(object):
-    def __init__(self, get_board_choice=None):
+    def __init__(self):
         self._board = [[SmallBoard() for _ in range(3)] for _ in range(3)]
         self._winner = None
         self._history = []
         self._players = ('X', 'O')
         self._turn = self._players[1] if randint(0, 1) else self._players[0]
-        self._possible_moves = {(i, j): self._board[i][j].get_empty()
+        self._possible_moves = {str(3*i + j): self._board[i][j].get_empty()
                                         for i in range(len(self._board))
                                         for j in range(len(self._board))
                                         if not self._board[i][j].is_over()
@@ -29,7 +30,7 @@ class BigBoard(object):
         if self._board[last_x][last_y].is_over():
             winner = self._board[last_x][last_y].check_winner()
             self._choosing_board = winner == self._turn
-            self._possible_moves = {(i, j): self._board[i][j].get_empty()
+            self._possible_moves = {str(3*i + j): self._board[i][j].get_empty()
                                             for i in range(len(self._board))
                                             for j in range(len(self._board))
                                             if not self._board[i][j].is_over()
@@ -37,7 +38,7 @@ class BigBoard(object):
 
         else:
             self._choosing_board = False
-            self._possible_moves = {(last_x, last_y): self._board[last_x][last_y].get_empty()}
+            self._possible_moves = {str(3*last_x + last_y): self._board[last_x][last_y].get_empty()}
 
         if not self._choosing_board:
             self._turn = self._players[1] if self._players[0] == self._turn else self._players[0]
@@ -46,8 +47,8 @@ class BigBoard(object):
     def make_move(self, board_x, board_y, move_x, move_y):
         if self._choosing_board:
             self._find_possible_moves(board_x, board_y)            
-
-        elif (board_x, board_y) in self._possible_moves and (move_x, move_y) in self._possible_moves[board_x, board_y]:
+            
+        elif str(3 * board_x + board_y) in self._possible_moves and (move_x, move_y) in self._possible_moves[str(3*board_x + board_y)]:
             self._board[board_x][board_y].make_move(move_x, move_y, self._turn)
             self._history.append((self._turn, board_x, board_y, move_x, move_y))
             if not self.is_over():
@@ -123,6 +124,14 @@ class BigBoard(object):
         return self._possible_moves
 
 
+    def to_json(self):
+        return encode(self)
+
+
+    def from_json(json):
+        return decode(json)
+
+
     def to_string(self):
         out= ''
 
@@ -157,8 +166,8 @@ class BigBoard(object):
 
     def print_valid_moves(self):
         print('Valid moves:')
-        for (x, y) in self._possible_moves:
-            print('\tBoard {},{}: {}'.format(x, y, self._possible_moves[x,y]))
+        for b in self._possible_moves:
+            print('\tBoard {},{}: {}'.format(x, y, self._possible_moves[b]))
 
 
     def print_turn(self):

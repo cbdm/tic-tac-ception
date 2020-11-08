@@ -49,8 +49,8 @@
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li><a href="{{ url_for('index') }}">Game</a></li>
-            <li><a href="{{ url_for('game_rules') }}">Rules</a></li>
             <li><a href="{{ url_for('move_history') }}">Play-by-play</a></li>
+            <li><a href="{{ url_for('game_rules') }}">Rules</a></li>
             {% block extra_header %}{% endblock %}
           </ul>
         </div>

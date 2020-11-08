@@ -1,15 +1,10 @@
-from tempfile import mkdtemp
-from flask import Flask, redirect, render_template, session, url_for, make_response, request
-from flask_session import Session
+from flask import Flask, redirect, render_template, session, url_for, make_response, request, flash
 from json import load, dumps
 from bigboard import BigBoard
 
 
 app = Flask(__name__)
-app.config['SESSION_FILE_DIR'] = mkdtemp()
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_TYPE'] = 'filesystem'
-Session(app)
+app.secret_key = b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180'
 
 
 @app.route('/')
@@ -17,27 +12,31 @@ def index():
     return redirect(url_for('game'))
 
 
-@app.route('/game/')
+@app.route('/game')
 def game():
     if 'board' not in session:
-        session['board'] = BigBoard()
-    if session['board'].is_over():
-        return render_template('game-over.html', board=session['board'].get_board(), winner=session['board'].check_winner())
+        session['board'] = BigBoard().to_json()
+
+    board = BigBoard.from_json(session['board'])
+
+    if board.is_over():
+        return render_template('game-over.html', board=board.get_board(), winner=board.check_winner())
     else:
-        return render_template('game.html', board=session['board'].get_board(), turn=session['board'].get_turn(),
-                                            valid=session['board'].get_valid_moves(), choice=session['board'].is_choosing())
+        return render_template('game.html', board=board.get_board(), turn=board.get_turn(),
+                                            valid=board.get_valid_moves(), choice=board.is_choosing())
 
 
-@app.route('/new-game/')
+@app.route('/new-game')
 def restart_game():
-    session['board'] = BigBoard()
+    session['board'] = BigBoard().to_json()
     return redirect(url_for('game'))
 
 
-@app.route('/save-game/')
+@app.route('/save-game')
 def save_game():
     if 'board' in session:
-        moves = session['board'].get_move_history()
+
+        moves = BigBoard.from_json(session['board']).get_move_history()
         if moves:
             export = {'start': moves[0][0],
                       'moves': [(b_r, b_c, s_r, s_c) for (_, b_r, b_c, s_r, s_c) in moves]}
@@ -51,7 +50,7 @@ def save_game():
     return redirect(url_for('game'))
 
 
-@app.route('/load-game/', methods=['POST', 'GET'])
+@app.route('/load-game', methods=['POST', 'GET'])
 def load_game():
     if request.method == "GET":
         return render_template('load-game.html')
@@ -65,9 +64,11 @@ def load_game():
                 for move in data['moves']:
                     big_row, big_col, sm_row, sm_col = move
                     new_game.make_move(big_row, big_col, sm_row, sm_col)
-                session['board'] = new_game
+                session['board'] = new_game.to_json()
         except:
-            print('Could not load the game.')
+            message = 'Could not load the game.'
+            print(message)
+            flash(message, 'danger')
 
     return redirect(url_for('game'))
 
@@ -75,21 +76,30 @@ def load_game():
 @app.route('/play/<int:board_row>/<int:board_col>/<int:row>/<int:col>')
 def play(board_row, board_col, row, col):
     if 'board' in session:
-        valid_moves = session['board'].get_valid_moves()
-        if session['board'].is_choosing():
-            row, col = valid_moves[board_row, board_col][0]
-        if ((board_row, board_col) in valid_moves) and ((row, col) in valid_moves[board_row, board_col]):
-            session['board'].make_move(board_row, board_col, row, col)
-            session['turn'] = 'O' if session['board'].get_turn() == 'X' else 'X'
+        board = BigBoard.from_json(session['board'])
+        small = str(3*board_row + board_col)
+        valid_moves = board.get_valid_moves()
+        
+        if board.is_choosing():
+            row, col = valid_moves[small][0]
+        if (small in valid_moves) and ((row, col) in valid_moves[small]):
+            board.make_move(board_row, board_col, row, col)
+            turn = 'O' if board.get_turn() == 'X' else 'X'
+        
+        session['board'] = board.to_json()
     return redirect(url_for('game'))
 
 
-@app.route('/play-by-play/')
+@app.route('/play-by-play')
 def move_history():
-    return render_template('play-by-play.html', moves=session['board'].get_move_history() if 'board' in session else [])
+    if 'board' in session:
+        moves = BigBoard.from_json(session['board']).get_move_history()
+    else:
+        moves = []
+    return render_template('play-by-play.html', moves=moves)
 
 
-@app.route('/rules/')
+@app.route('/rules')
 def game_rules():
     return render_template('rules.html')
 
