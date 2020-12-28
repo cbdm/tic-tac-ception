@@ -7,7 +7,6 @@ Description: Implements a class to keep track of a basic tic-tac-toe game.
 '''
 
 from itertools import chain
-from random import choice
 
 class SmallBoard(object):
     def __init__(self):

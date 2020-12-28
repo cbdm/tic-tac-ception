@@ -7,7 +7,7 @@ Description: Implements the logic for the Tic-Tac-Ception game and a basic termi
 '''
 
 from smallboard import SmallBoard
-from random import randint, choice
+from random import randint
 from itertools import chain
 from jsonpickle import encode, decode
 
