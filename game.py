@@ -1,6 +1,15 @@
+'''game.py
+
+Author: Caio Batista de Melo
+Date Created: 2020-11-06
+Date Modified: 2020-12-28
+Description: Sets up the flask server that allows playing the game.
+'''
+
 from flask import Flask, redirect, render_template, session, url_for, make_response, request, flash
 from json import load, dumps
 from bigboard import BigBoard
+from ai_options import choose_move
 
 
 app = Flask(__name__)
@@ -39,6 +48,7 @@ def start_2P_game():
 @app.route('/start-ai-game')
 def start_ai_game():
     session['ai'] = True
+    session['ai_mode'] = 'random'
     return clear_board()
 
 
@@ -48,9 +58,10 @@ def save_game():
 
         moves = BigBoard.from_json(session['board']).get_move_history()
         if moves:
-            export = {'ai': session['ai'] if 'ai' in session else False,
+            export = {'ai': session.get('ai', False),
+                      'ai_mode': session.get('ai_mode', None),
                       'start': moves[0][0],
-                      'moves': [(b_r, b_c, s_r, s_c) for (_, b_r, b_c, s_r, s_c) in moves]}
+                      'moves': [(b_r, b_c, s_r, s_c) for (unused_turn, b_r, b_c, s_r, s_c, unused_choice) in moves]}
             
             response = make_response(dumps(export))
             response.headers.set('Content-Type', 'text/json')
@@ -70,7 +81,10 @@ def load_game():
         try:
             if str(request.referrer).replace(request.host_url, '').startswith('load-game'):
                 data = load(request.files['game_json'])
-                session['ai'] = data['ai'] if 'ai' in data else False
+                session['ai'] = data.get('ai', False)
+                session['ai_mode'] = data.get('ai_mode', None)
+                if session['ai'] and session['ai_mode'] is None:
+                    session['ai_mode'] = 'random'
                 new_game = BigBoard()
                 new_game._turn = data['start']
                 for move in data['moves']:
@@ -112,7 +126,7 @@ def play(board_row, board_col, row, col):
 def make_ai_move():
     if 'board' in session:
         board = BigBoard.from_json(session['board'])
-        b_row, b_col, s_row, s_col = board.find_ai_move()
+        b_row, b_col, s_row, s_col = choose_move(board, session.get('ai_mode', None))
         return play(b_row, b_col, s_row, s_col)
 
     return redirect(url_for('game'))

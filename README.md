@@ -24,5 +24,8 @@ Like a regular tic-tac-toe, the game ends when there is (1) a winner or (2) all 
 1. The regular rules apply -- you need to win three straight small boards (any row, column, or diagonal) to win;
 2. The winner will be the player with most small board wons. If tied, then the game ends in a draw.
 
+### Thanks
+Thanks to Brian for introducing me to this game and Kenneth for suggesting the name!
+
 ### Say hi :)
 [hi@tic-tac-ception.com](mailto:hi@tic-tac-ception.com)

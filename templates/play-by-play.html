@@ -14,12 +14,14 @@
 </style>
 <table class="tg">
   <tr>
+    <th class="tg-uys7"><b>Turn</b></th>
     <th class="tg-uys7"><b>Player</b></th>
     <th class="tg-uys7"><b>Big Board</b></th>
     <th class="tg-c3ow"><b>Small Board</b></th>
   </tr>
-  {% for (player, b_row, b_col, s_row, s_col) in moves %}
+  {% for (player, b_row, b_col, s_row, s_col, choice) in moves %}
     <tr>
+      <td class="tg-uys7">{{ loop.index }}</td>
       <td class="tg-uys7">{{ player }}</td>
       <td class="tg-uys7">
         {% if b_row == 0 %}
@@ -39,21 +41,25 @@
         {{ b_row, b_col }}
       </td>
       <td class="tg-uys7">
-        {% if s_row == 0 %}
-          top
-        {% elif s_row == 1 %}
-          middle
+        {% if choice %}
+          board choice
         {% else %}
-          bottom
+          {% if s_row == 0 %}
+            top
+          {% elif s_row == 1 %}
+            middle
+          {% else %}
+            bottom
+          {% endif %}
+          {% if s_col == 0 %}
+            left
+          {% elif s_col == 1 %}
+            center
+          {% else %}
+            right
+          {% endif %}
+          {{ s_row, s_col }}
         {% endif %}
-        {% if s_col == 0 %}
-          left
-        {% elif s_col == 1 %}
-          center
-        {% else %}
-          right
-        {% endif %}
-        {{ s_row, s_col }}
       </td>
     </tr>
   {% endfor %}

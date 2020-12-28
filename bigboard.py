@@ -44,27 +44,19 @@ class BigBoard(object):
             self._turn = self._players[1] if self._players[0] == self._turn else self._players[0]
 
 
-    def make_move(self, board_x, board_y, move_x, move_y):
-        if self._choosing_board:
-            self._find_possible_moves(board_x, board_y)            
-            
-        elif str(3 * board_x + board_y) in self._possible_moves and (move_x, move_y) in self._possible_moves[str(3*board_x + board_y)]:
-            self._board[board_x][board_y].make_move(move_x, move_y, self._turn)
-            self._history.append((self._turn, board_x, board_y, move_x, move_y))
-            if not self.is_over():
-                self._find_possible_moves(move_x, move_y)
-            else:
-                self._possible_moves = {}
+    def make_move(self, board_x, board_y, move_x, move_y):    
+        if str(3 * board_x + board_y) in self._possible_moves and (move_x, move_y) in self._possible_moves[str(3*board_x + board_y)]:
+            self._history.append((self._turn, board_x, board_y, move_x, move_y, self._choosing_board))
 
-    
-    def find_ai_move(self):
-        assert self._possible_moves
-        
-        small = int(choice(list(self._possible_moves)))
-        row, col = small//3, small%3
-        x, y = self._board[row][col].find_ai_move(self._players, self._turn)
-        
-        return row, col, x, y
+            if self._choosing_board:
+                self._find_possible_moves(board_x, board_y)
+            
+            else:
+                self._board[board_x][board_y].make_move(move_x, move_y, self._turn)
+                if not self.is_over():
+                    self._find_possible_moves(move_x, move_y)
+                else:
+                    self._possible_moves = {}
 
 
     def is_choosing(self):
