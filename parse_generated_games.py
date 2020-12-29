@@ -7,6 +7,7 @@ Description: Read generated games and creates a feature set.
 '''
 
 import argparse
+import numpy as np
 from json import load
 from bigboard import BigBoard
 
@@ -42,7 +43,7 @@ def split_game(moves):
                 cur_board = convert_board_to_int(cur_board)
                 small_boards.append(cur_board)
 
-        move_data = [small_wins, *small_boards, m[1:]]
+        move_data = [small_wins, *small_boards, *m[1:]]
         if m[0] == p0:
             player_0.append(move_data)
         else:
@@ -53,24 +54,32 @@ def split_game(moves):
     return player_0, player_1
 
 
-def parse_data(games, scoring_function=rate_moves):
+def parse_data(games, scoring_function=rate_moves, verbose=False, log_rate=50):
     data = []
     scores = []
-    for game in games.values():
+    for i, game in enumerate(games.values()):
+        if verbose and i % log_rate == 0:
+            print(f'Processing game {i} out of {len(games)}...')
         player_0, player_1 = split_game(game['moves'])
         result = 1 if game['winner'] == game['moves'][0][0] else 0 if game['winner'] is None else -1
         data.extend(player_0)
         scores.extend(scoring_function(player_0, result))
         data.extend(player_1)
         scores.extend(scoring_function(player_1, -result))
-    return data, scores
+    return np.asarray(data), np.asarray(scores)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='This script generates random games.')
-    parser.add_argument('-f', '--file', help='filename to read the generated games', required=True, type=argparse.FileType('r'))
+    parser.add_argument('-i', '--file_in', help='filename to read the generated games', required=True, type=argparse.FileType('r'))
+    parser.add_argument('-o', '--file_out', help='filename export the numpy array with parsed data', required=True, type=argparse.FileType('wb'))
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
     args = parser.parse_args()
-    games = load(args.file)
-    X, y = parse_data(games)
+    games = load(args.file_in)
+    X, y = parse_data(games, verbose=args.verbose)
+    print("Data points' shape:", X.shape)
     print('Sample data point:', X[0])
+    print("Scores' shape:", y.shape)
     print('Sample score:', y[0])
+    np.savez_compressed(args.file_out, X=X, y=y)
+    args.file_out.close()
