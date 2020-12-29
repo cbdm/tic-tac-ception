@@ -19,7 +19,7 @@ def generate_n_games(n, verbose, pct):
     
     for i in range(n):
         if verbose and i % parts == 0:
-            print(f'Generating game #{i} ({(i/n)*100:.2f}%)')
+            print(f'Generating game #{i} ({((i+1)/n)*100:.2f}%)')
 
         new_game = BigBoard()
         while not new_game.is_over():
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--out', help='filename to export the games played', nargs='?', type=argparse.FileType('w'), default=stdout)
     parser.add_argument('-n', '--num', help='how many games it should generate', default=10, type=int)
     parser.add_argument('-v', '--verbose', default=True, type=bool)
-    parser.add_argument('-p', '--pct', help='percentage of completion to display in verbose output', default=5, type=int)
+    parser.add_argument('-p', '--pct', help='percentage of completion to display in verbose output', default=5, type=float)
     args = parser.parse_args()
     
     games = generate_n_games(args.num, args.verbose, args.pct)
