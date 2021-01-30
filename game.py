@@ -267,10 +267,7 @@ def online_join():
     if str(request.referrer).replace(request.host_url, "").startswith("online/home"):
         game_id = request.form.get("game_id")
         assert (
-            len(game_id) <= 6
-        ), "Invalid Game ID; it should be a number between 1 and 10000"
-        assert game_id.isdigit() or (
-            game_id.startswith("#") and game_id[1:].isdigit()
+            len(game_id) <= 6 and game_id.isdigit() and int(game_id) <= 10000
         ), "Invalid Game ID; it should be a number between 1 and 10000"
 
         player = request.form.get("player")
