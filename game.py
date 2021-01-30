@@ -21,6 +21,7 @@ app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY', b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180')
 app.config['SQLALCHEMY_DATABASE_URI'] = getenv('DATABASE_URL', 'postgresql:///games_db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
