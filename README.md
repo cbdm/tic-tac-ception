@@ -3,7 +3,7 @@
 ![Logo](static/Tic-Tac-Ception_Logo.png?raw=true "Title")
 
 This is a game of Tic-Tac-Toes within a Tic-Tac-Toe!  
-You can play the game at [www.tic-tac-ception.com](http://www.tic-tac-ception.com)
+You can play the game at [www.tic-tac-ception.com](https://www.tic-tac-ception.com)
 
 ## How to play
 ### Basic flow
@@ -28,4 +28,4 @@ Like a regular tic-tac-toe, the game ends when there is (1) a winner or (2) all 
 Thanks to Brian for introducing me to this game and Kenneth for suggesting the name!
 
 ### Say hi :)
-[hi@tic-tac-ception.com](mailto:hi@tic-tac-ception.com)
+[mail@tic-tac-ception.com](mailto:mail@tic-tac-ception.com)
