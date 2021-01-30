@@ -7,5 +7,6 @@
 {% block content %}
   <h4>Ooops, something went wrong...</h4>
   <p>{{ error }}</p>
-  <button onclick="window.history.back()" class="btn btn-default">Back</button>
+  <button onclick="window.history.back()" class="btn btn-default">Back to last page</button>
+  <a href="{{ url_for('index') }}" class="btn btn-default">Back to homepage</a>
 {% endblock %}
