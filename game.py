@@ -231,6 +231,12 @@ def online_home():
 def online_create():
     if str(request.referrer).replace(request.host_url, "").startswith("online/home"):
         xPASS, oPASS = request.form.get("xPASS"), request.form.get("oPASS")
+        assert len(xPASS) in range(
+            4, 25
+        ), "The password for player X should be between 4 and 24 characters long."
+        assert len(oPASS) in range(
+            4, 25
+        ), "The password for player O should be between 4 and 24 characters long."
         assert xPASS != oPASS, "The passwords for the players cannot be the same!"
 
         # need to decode because postgres encodes it again when inserting
@@ -259,9 +265,21 @@ def online_create():
 @app.route("/online/join", methods=["POST"])
 def online_join():
     if str(request.referrer).replace(request.host_url, "").startswith("online/home"):
-        player = request.form.get("player")
-        password = request.form.get("password")
         game_id = request.form.get("game_id")
+        assert (
+            len(game_id) <= 6
+        ), "Invalid Game ID; it should be a number between 1 and 10000"
+        assert game_id.isdigit() or (
+            game_id.startswith("#") and game_id[1:].isdigit()
+        ), "Invalid Game ID; it should be a number between 1 and 10000"
+
+        player = request.form.get("player")
+        assert player in ("X", "O"), "Invalid player selection."
+
+        password = request.form.get("password")
+        assert len(password) in range(
+            4, 25
+        ), "The game password should be between 4 and 24 characters long."
 
         game = OnlineGame.query.filter_by(id=game_id).first()
         assert game, "Unable to get game #{}".format(game_id)
