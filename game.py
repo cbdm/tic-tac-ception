@@ -202,7 +202,7 @@ def online_create():
 
         return redirect(url_for('online_home'))
     
-    return str(request.referrer, request.host_url)
+    return '{}, {}'.format(str(request.referrer), str(request.host_url))
     abort(401)
 
 
