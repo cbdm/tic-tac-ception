@@ -230,11 +230,12 @@ def online_home():
 @app.route("/online/create", methods=["POST"])
 def online_create():
     if str(request.referrer).replace(request.host_url, "").startswith("online/home"):
-        xPASS = bcrypt.generate_password_hash(request.form.get("xPASS")).decode(
-            "utf8"
-        )  # need to decode because postgres encodes it again when inserting
-        oPASS = bcrypt.generate_password_hash(request.form.get("oPASS")).decode("utf8")
+        xPASS, oPASS = request.form.get("xPASS"), request.form.get("oPASS")
         assert xPASS != oPASS, "The passwords for the players cannot be the same!"
+
+        # need to decode because postgres encodes it again when inserting
+        xPASS = bcrypt.generate_password_hash(xPASS).decode("utf8")
+        oPASS = bcrypt.generate_password_hash(oPASS).decode("utf8")
 
         game_board = BigBoard().to_json()
 
@@ -258,11 +259,23 @@ def online_create():
 @app.route("/online/join", methods=["POST"])
 def online_join():
     if str(request.referrer).replace(request.host_url, "").startswith("online/home"):
-        session["online_player"] = request.form.get("player")
-        session["online_pass"] = request.form.get("password")
-        session["active_online_id"] = request.form.get("game_id")
-        if session.get("newly_created_id", None) == int(session["active_online_id"]):
+        player = request.form.get("player")
+        password = request.form.get("password")
+        game_id = request.form.get("game_id")
+
+        game = OnlineGame.query.filter_by(id=game_id).first()
+        assert game, "Unable to get game #{}".format(game_id)
+        assert bcrypt.check_password_hash(
+            (game.xPASS if player == "X" else game.oPASS), password
+        ), "Wrong password for player {} in game #{}!".format(player, game.id)
+
+        session["online_player"] = player
+        session["online_pass"] = game.xPASS if player == "X" else game.oPASS
+        session["active_online_id"] = game.id
+
+        if session.get("newly_created_id", None) == session["active_online_id"]:
             del session["newly_created_id"]
+
         return redirect(url_for("online_game"))
 
     abort(401)
@@ -275,19 +288,11 @@ def online_game():
 
     game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
     assert game, "Unable to get game #{}".format(session["active_online_id"])
-
-    if session["online_player"] == "X":
-        assert bcrypt.check_password_hash(
-            game.xPASS, session["online_pass"]
-        ), "Wrong password for player X in game #{}!".format(
-            session["active_online_id"]
-        )
-    else:
-        assert bcrypt.check_password_hash(
-            game.oPASS, session["online_pass"]
-        ), "Wrong password for player O in game #{}!".format(
-            session["active_online_id"]
-        )
+    assert session["online_pass"] == (
+        game.xPASS if session["online_player"] == "X" else game.oPASS
+    ), "Wrong password for player {} in game #{}!".format(
+        session["online_player"], game.id
+    )
 
     board = BigBoard.from_json(game.board)
 
@@ -321,19 +326,11 @@ def online_game():
 def online_play(board_row, board_col, row, col):
     game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
     assert game, "Unable to get game #{}".format(session["active_online_id"])
-
-    if session["online_player"] == "X":
-        assert bcrypt.check_password_hash(
-            game.xPASS, session["online_pass"]
-        ), "Wrong password for player X in game #{}!".format(
-            session["active_online_id"]
-        )
-    else:
-        assert bcrypt.check_password_hash(
-            game.oPASS, session["online_pass"]
-        ), "Wrong password for player O in game #{}!".format(
-            session["active_online_id"]
-        )
+    assert session["online_pass"] == (
+        game.xPASS if session["online_player"] == "X" else game.oPASS
+    ), "Wrong password for player {} in game #{}!".format(
+        session["online_player"], game.id
+    )
 
     board = BigBoard.from_json(game.board)
 
