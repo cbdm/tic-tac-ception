@@ -7,9 +7,10 @@ Description: Generates random games that can be used to train AI models.
 """
 
 import argparse
+from json import dumps
 from math import ceil
 from sys import stdout
-from json import dumps
+
 from ai_options import Random
 from bigboard import BigBoard
 

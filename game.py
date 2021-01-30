@@ -6,26 +6,28 @@ Date Modified: 2021-01-30
 Description: Sets up the flask server that allows playing the game.
 """
 
-from flask import (
-    Flask,
-    redirect,
-    render_template,
-    session,
-    url_for,
-    make_response,
-    request,
-    flash,
-    abort,
-)
-from flask_bcrypt import Bcrypt
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.exceptions import HTTPException
-from json import load, dumps
-from bigboard import BigBoard
-from ai_options import choose_move
+from datetime import datetime
+from json import dumps, load
 from os import getenv
 from os.path import exists
-from datetime import datetime
+
+from flask import (
+    Flask,
+    abort,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.exceptions import HTTPException
+
+from ai_options import choose_move
+from bigboard import BigBoard
+from flask_bcrypt import Bcrypt
+from flask_sqlalchemy import SQLAlchemy
 
 
 class ReverseProxied(object):

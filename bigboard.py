@@ -6,10 +6,11 @@ Date Modified: 2020-11-08
 Description: Implements the logic for the Tic-Tac-Ception game and a basic terminal interface.
 """
 
-from smallboard import SmallBoard
-from random import randint
 from itertools import chain
-from jsonpickle import encode, decode
+from random import randint
+
+from jsonpickle import decode, encode
+from smallboard import SmallBoard
 
 
 class BigBoard(object):
