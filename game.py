@@ -2,18 +2,35 @@
 
 Author: Caio Batista de Melo
 Date Created: 2020-11-06
-Date Modified: 2020-12-28
+Date Modified: 2021-01-29
 Description: Sets up the flask server that allows playing the game.
 '''
 
-from flask import Flask, redirect, render_template, session, url_for, make_response, request, flash
+from flask import Flask, redirect, render_template, session, url_for, make_response, request, flash, abort
+from flask_bcrypt import Bcrypt
+from werkzeug.exceptions import HTTPException
 from json import load, dumps
 from bigboard import BigBoard
 from ai_options import choose_move
+from sqlite3 import connect
+from os import getenv
+from os.path import exists
 
+db_path = getenv('DB_PATH', './saved_games.db')
+if not exists(db_path):
+    connect(db_path).execute("""
+        CREATE TABLE GAMES (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            xPASS TEXT,
+            oPASS TEXT,
+            board TEXT
+        );
+    """)
 
 app = Flask(__name__)
-app.secret_key = b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180'
+app.secret_key = getenv('SECRET_KEY', b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180')
+app.db = db_path
+bcrypt = Bcrypt(app)
 
 
 @app.route('/')
@@ -115,7 +132,6 @@ def play(board_row, board_col, row, col):
             row, col = valid_moves[small][0]
         if (small in valid_moves) and ((row, col) in valid_moves[small]):
             board.make_move(board_row, board_col, row, col)
-            turn = 'O' if board.get_turn() == 'X' else 'X'
         
         session['board'] = board.to_json()
     
@@ -146,9 +162,152 @@ def game_rules():
     return render_template('rules.html')
 
 
-@app.errorhandler(404)
+@app.route('/online/home')
+def online_home():
+    return render_template('online-home.html', active_online_id=session.get('active_online_id', None), new_game_id=session.get('newly_created_id', None))
+
+
+@app.route('/online/create', methods=['POST'])
+def online_create():
+    if str(request.referrer).replace(request.host_url, '').startswith('online/home'):
+        xPASS = bcrypt.generate_password_hash(request.form.get('xPASS'))
+        oPASS = bcrypt.generate_password_hash(request.form.get('oPASS'))
+        assert xPASS != oPASS, 'The passwords for the players cannot be the same!'        
+        
+        new_game = BigBoard().to_json()
+
+        with connect(app.db) as db_connect:
+            cursor = db_connect.cursor()
+            cursor.execute('INSERT INTO GAMES (xPASS, oPASS, board) VALUES (?, ?, ?);', (xPASS, oPASS, new_game))
+            session['newly_created_id'] = cursor.lastrowid
+            return redirect(url_for('online_home'))
+    
+    abort(401)
+
+
+@app.route('/online/join', methods=['POST'])
+def online_join():
+    if str(request.referrer).replace(request.host_url, '').startswith('online/home'):
+        session['online_player'] = request.form.get('player')
+        session['online_pass'] = request.form.get('password')
+        session['active_online_id'] = request.form.get('game_id')
+        if session.get('newly_created_id', None) == int(session['active_online_id']): del session['newly_created_id']
+        return redirect(url_for('online_game'))
+    
+    abort(401)
+
+
+@app.route('/online/game')
+def online_game():
+    if 'active_online_id' not in session:
+        return redirect(url_for('online_home'))
+    
+    with connect(app.db) as db_connect:
+        cursor = db_connect.cursor()
+        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
+    
+    game = list(query)
+    assert len(game) == 1, 'Unable to get game #{}'.format(session['active_online_id'])
+    game = game[0]
+
+    if session['online_player'] == 'X':
+        assert bcrypt.check_password_hash(game[1], session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
+    else:
+        assert bcrypt.check_password_hash(game[2], session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
+    
+    board = BigBoard.from_json(game[3])
+
+    if board.is_over():
+        return render_template('game-over.html', board=board.get_board(), winner=board.check_winner())
+    elif board.get_turn() != session['online_player']:
+        return render_template('online-game.html', board=board.get_board(), turn=board.get_turn(),
+                                            valid=[], choice=board.is_choosing(), wait=True, game_id=game[0])
+    else:
+        return render_template('online-game.html', board=board.get_board(), turn=board.get_turn(),
+                                            valid=board.get_valid_moves(), choice=board.is_choosing(), wait=False, game_id=game[0])
+
+
+@app.route('/online/play/<int:board_row>/<int:board_col>/<int:row>/<int:col>')
+def online_play(board_row, board_col, row, col):
+    with connect(app.db) as db_connect:
+        cursor = db_connect.cursor()
+        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
+    
+    game = list(query)
+    assert len(game) == 1, 'Unable to get game #{}'.format(session['active_online_id'])
+    game = game[0]
+
+    if session['online_player'] == 'X':
+        assert bcrypt.check_password_hash(game[1], session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
+    else:
+        assert bcrypt.check_password_hash(game[2], session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
+
+    board = BigBoard.from_json(game[3])
+
+    assert session['online_player'] == board.get_turn(), 'Not your turn to move...'
+    
+    small = str(3*board_row + board_col)
+    valid_moves = board.get_valid_moves()
+    
+    if board.is_choosing():
+        row, col = valid_moves[small][0]
+    
+    if (small in valid_moves) and ((row, col) in valid_moves[small]):
+        board.make_move(board_row, board_col, row, col)
+    
+    new_board = board.to_json()
+    with connect(app.db) as db_connect:
+        cursor = db_connect.cursor()
+        cursor.execute('UPDATE GAMES SET board = ? WHERE id=?;', (new_board, game[0]))
+
+    return redirect(url_for('online_game'))
+
+
+@app.route('/online/play-by-play')
+def online_move_history():
+    with connect(app.db) as db_connect:
+        cursor = db_connect.cursor()
+        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
+    
+    game = list(query)
+    if len(game) == 1:
+        moves = BigBoard.from_json(game[0][3]).get_move_history()
+    else:
+        moves = []
+    return render_template('online-play-by-play.html', moves=moves)
+
+
+@app.route('/online/save-game')
+def online_save_game():
+    if "active_online_id" in session:
+        with connect(app.db) as db_connect:
+            cursor = db_connect.cursor()
+            query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
+        
+        game = list(query)
+        assert len(game) == 1, 'Unable to get game #{}'.format(session["active_online_id"])
+        
+        moves = BigBoard.from_json(game[0][3]).get_move_history()
+        
+        if moves:
+            export = {'ai': session.get('ai', False),
+                      'ai_mode': session.get('ai_mode', None),
+                      'start': moves[0][0],
+                      'moves': [(b_r, b_c, s_r, s_c) for (unused_turn, b_r, b_c, s_r, s_c, unused_choice) in moves]}
+            
+            response = make_response(dumps(export))
+            response.headers.set('Content-Type', 'text/json')
+            response.headers.set('Content-Disposition', 'attachment', filename='TicTacCeption-game.json')
+
+            return response
+
+    return redirect(url_for('online_game'))
+
+
+@app.errorhandler(Exception)
 def not_found(exc):
-    return render_template('404.html'), 404
+    code = exc.code if isinstance(exc, HTTPException) else 500
+    return render_template('error.html', code=code, error=str(exc)), code
 
 
 if __name__ == '__main__':

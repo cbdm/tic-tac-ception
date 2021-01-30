@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %} | Play Online{% endblock %}
+
+{% block content_title %} Play Online {% endblock %}
+
+{% block content %}
+    {% if new_game_id %}
+        <h2>Success!</h2> Your new game was created, you can join using ID #{{ new_game_id }}
+    {% endif %}
+
+    {% if active_online_id %}
+        <h2>Active game: <a href="{{ url_for('online_game') }}" class="btn btn-default">#{{ active_online_id }}</a></h2>
+        <br/>
+    {% endif %}
+
+    <h2>Create game</h2>
+    <form action="{{ url_for('online_create')  }}" class="form-horizontal" method="post">
+        <div class="form-group">
+            <label for="xPASS" class="col-sm-5 control-label">X's password:</label>
+            <div class="col-sm-5">
+            <input class="form-control" id="xPASS" name="xPASS" type="password">
+            </div>
+            <br/><br/>
+            <label for="oPASS" class="col-sm-5 control-label">O's password:</label>
+            <div class="col-sm-5">
+            <input class="form-control" id="oPASS" name="oPASS" type="password">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-5 col-sm-10">
+            <button class="btn btn-default" type="submit">Create</button>
+            </div>
+        </div>
+    </form>
+
+    <h2>Join game</h2>
+    <form action="{{ url_for('online_join')  }}" class="form-horizontal" method="post">
+        <div class="form-group">
+            <label for="game_id" class="col-sm-5 control-label">Game ID:</label>
+            <div class="col-sm-5">
+            <input class="form-control" id="game_id" name="game_id" type="text">
+            </div>
+            <label for="player" class="col-sm-5 control-label">Play as:</label>
+            <div class="col-sm-5">
+            <select class="form-control" id="player" name="player">
+                <option value="X">X</option>
+                <option value="O">O</option>
+            </select>
+            </div>
+            <label for="password" class="col-sm-5 control-label">Password:</label>
+            <div class="col-sm-5">
+            <input class="form-control" id="password" name="password" type="password">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-5 col-sm-10">
+            <button class="btn btn-default" type="submit">Join</button>
+            </div>
+        </div>
+    </form>
+
+    </div> 
+{% endblock %}

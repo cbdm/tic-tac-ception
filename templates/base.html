@@ -49,8 +49,10 @@
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('game') }}">Active Game</a></li>
-            <li><a href="{{ url_for('move_history') }}">Play-by-play</a></li>
+            <li><a href="{{ url_for('game') }}">Active Local Game</a></li>
+            <li><a href="{{ url_for('move_history') }}">Local Play-by-play</a></li>
+            <li><a href="{{ url_for('online_game') }}">Online Game</a></li>
+            <li><a href="{{ url_for('online_move_history') }}">Online Play-by-play</a></li>
             <li><a href="{{ url_for('game_rules') }}">Rules</a></li>
             {% block extra_header %}{% endblock %}
           </ul>

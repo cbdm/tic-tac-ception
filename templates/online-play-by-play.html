@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %} | Online Play-by-play{% endblock %}
+
+{% block content_title %} Online Play-by-play {% endblock %}
+
+{% block content %}
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 20px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 20px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-uys7{border-color:inherit;text-align:center}
+</style>
+<table class="tg">
+  <tr>
+    <th class="tg-uys7"><b>Turn</b></th>
+    <th class="tg-uys7"><b>Player</b></th>
+    <th class="tg-uys7"><b>Big Board</b></th>
+    <th class="tg-c3ow"><b>Small Board</b></th>
+  </tr>
+  {% for (player, b_row, b_col, s_row, s_col, choice) in moves %}
+    <tr>
+      <td class="tg-uys7">{{ loop.index }}</td>
+      <td class="tg-uys7">{{ player }}</td>
+      <td class="tg-uys7">
+        {% if b_row == 0 %}
+          top
+        {% elif b_row == 1 %}
+          middle
+        {% else %}
+          bottom
+        {% endif %}
+        {% if b_col == 0 %}
+          left
+        {% elif b_col == 1 %}
+          center
+        {% else %}
+          right
+        {% endif %}
+        {{ b_row, b_col }}
+      </td>
+      <td class="tg-uys7">
+        {% if choice %}
+          board choice
+        {% else %}
+          {% if s_row == 0 %}
+            top
+          {% elif s_row == 1 %}
+            middle
+          {% else %}
+            bottom
+          {% endif %}
+          {% if s_col == 0 %}
+            left
+          {% elif s_col == 1 %}
+            center
+          {% else %}
+            right
+          {% endif %}
+          {{ s_row, s_col }}
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

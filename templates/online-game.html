@@ -1,15 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %} | Active Local Game{% endblock %}
+{% if wait %}
+  {% block extra_head %}
+    <meta http-equiv="refresh" content="60">
+  {% endblock %}
+{% endif %}
+
+{% block title %} | Online Game{% endblock %}
 
 {% block content_title %}
-Game Board: 
-
-{% if choice %}
-    {{ turn }}, please choose a small board for your opponent to play next.
+Game #{{ game_id }} Status
+<br/>
+<small>
+{% if wait %}
+  Not your turn... we'll refresh in 1 minute to check!
+{% else %}
+  Your move!
+  {% if choice %}
+    Please choose a small board for your opponent to play next.
   {% else %}
-    {{ turn }}'s turn to play.
+    Please select a valid move on the board.
   {% endif %}
+{% endif %}
+</small>
+
 {% endblock %}
 
 {% block content %}
@@ -35,7 +49,7 @@ Game Board:
                         {% if board[x][y].get_board()[i][j] %}
                           {{ board[x][y].get_board()[i][j] }}
                         {% elif not choice and (3*x + y)|string in valid and (i,j) in valid[(3*x + y)|string] %}
-                          <a href="{{url_for('play', board_row=x, board_col=y, row=i, col=j) }}">Play {{ turn }}</a>
+                          <a href="{{url_for('online_play', board_row=x, board_col=y, row=i, col=j) }}">Play {{ turn }}</a>
                         {% else %}
                           _
                         {% endif %}
@@ -45,8 +59,8 @@ Game Board:
                 {% endfor %}
               </table>
             </center>
-            {% if choice %}
-              <a href="{{url_for('play', board_row=x, board_col=y, row=0, col=0) }}">Choose this (
+            {% if choice and not wait %}
+              <a href="{{url_for('online_play', board_row=x, board_col=y, row=0, col=0) }}">Choose this (
               {% if x == 0 %}
                 top
               {% elif x == 1 %}
@@ -69,9 +83,13 @@ Game Board:
     </tr>
   {% endfor %}
 </table>
+
 <br/>
-<a href="{{ url_for('make_ai_move') }}" class="btn btn-default">Make Random Move</a>
-<a href="{{ url_for('save_game') }}" class="btn btn-default">Save Game</a>
-<a href="{{ url_for('load_game') }}" class="btn btn-default">Load Game</a>
-<a href="{{ url_for('clear_board') }}" class="btn btn-default">Clear Board</a>
+
+<a href="{{ url_for('online_home') }}" class="btn btn-default">Join Another Game</a>
+<a href="{{ url_for('online_save_game') }}" class="btn btn-default">Save Game</a>
+{% if wait %}
+  <a href="{{ url_for('online_game') }}" class="btn btn-default">Refresh Now</a>
+{% endif %}
+
 {% endblock %}
