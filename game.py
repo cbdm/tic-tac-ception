@@ -9,7 +9,6 @@ Description: Sets up the flask server that allows playing the game.
 from datetime import datetime
 from json import dumps, load
 from os import getenv
-from os.path import exists
 
 from flask import (
     Flask,
@@ -166,7 +165,7 @@ def load_game():
                     big_row, big_col, sm_row, sm_col = move
                     new_game.make_move(big_row, big_col, sm_row, sm_col)
                 session["board"] = new_game.to_json()
-        except:
+        except Exception:
             message = "Could not load the game."
             flash(message, "danger")
 
