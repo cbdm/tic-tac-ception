@@ -182,6 +182,7 @@ def online_home():
 @app.route('/online/create', methods=['POST'])
 def online_create():
     if str(request.referrer).replace(request.host_url, '').startswith('online/home'):
+        flash('here1')
         xPASS = bcrypt.generate_password_hash(request.form.get('xPASS')).decode('utf8') # need to decode because postgres encodes it again when inserting
         oPASS = bcrypt.generate_password_hash(request.form.get('oPASS')).decode('utf8')
         assert xPASS != oPASS, 'The passwords for the players cannot be the same!'        
@@ -201,7 +202,8 @@ def online_create():
         session['newly_created_id'] = new_game.id
 
         return redirect(url_for('online_home'))
-
+    
+    flash('here2: {}'.format(str(request.referrer).replace(request.host_url, '')))
     abort(401)
 
 
