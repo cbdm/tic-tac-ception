@@ -2,35 +2,47 @@
 
 Author: Caio Batista de Melo
 Date Created: 2020-11-06
-Date Modified: 2021-01-29
+Date Modified: 2021-01-30
 Description: Sets up the flask server that allows playing the game.
 '''
 
 from flask import Flask, redirect, render_template, session, url_for, make_response, request, flash, abort
 from flask_bcrypt import Bcrypt
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.exceptions import HTTPException
 from json import load, dumps
 from bigboard import BigBoard
 from ai_options import choose_move
-from sqlite3 import connect
 from os import getenv
 from os.path import exists
-
-db_path = getenv('DB_PATH', './saved_games.db')
-if not exists(db_path):
-    connect(db_path).execute("""
-        CREATE TABLE GAMES (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            xPASS TEXT,
-            oPASS TEXT,
-            board TEXT
-        );
-    """)
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY', b'\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180')
-app.db = db_path
+app.config['SQLALCHEMY_DATABASE_URI'] = getenv('DATABASE_URL', 'postgresql:///games_db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+
+
+class OnlineGame(db.Model):
+    __tablename__ = 'saved_games'
+
+    id = db.Column(db.Integer, primary_key=True)  # Game ID
+    timestamp = db.Column(db.String())            # Timestamp of game creation (datetime.utcnow().isoformat())
+    xPASS = db.Column(db.String())                # Hashed password for player X
+    oPASS = db.Column(db.String())                # Hashed password for player O
+    board = db.Column(db.String())                # Current game board
+
+    def __init__(self, timestamp, xPASS, oPASS, board):
+        self.timestamp = timestamp
+        self.xPASS = xPASS
+        self.oPASS = oPASS
+        self.board = board
+
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
 
 
 @app.route('/')
@@ -170,18 +182,26 @@ def online_home():
 @app.route('/online/create', methods=['POST'])
 def online_create():
     if str(request.referrer).replace(request.host_url, '').startswith('online/home'):
-        xPASS = bcrypt.generate_password_hash(request.form.get('xPASS'))
-        oPASS = bcrypt.generate_password_hash(request.form.get('oPASS'))
+        xPASS = bcrypt.generate_password_hash(request.form.get('xPASS')).decode('utf8') # need to decode because postgres encodes it again when inserting
+        oPASS = bcrypt.generate_password_hash(request.form.get('oPASS')).decode('utf8')
         assert xPASS != oPASS, 'The passwords for the players cannot be the same!'        
         
-        new_game = BigBoard().to_json()
+        game_board = BigBoard().to_json()
 
-        with connect(app.db) as db_connect:
-            cursor = db_connect.cursor()
-            cursor.execute('INSERT INTO GAMES (xPASS, oPASS, board) VALUES (?, ?, ?);', (xPASS, oPASS, new_game))
-            session['newly_created_id'] = cursor.lastrowid
-            return redirect(url_for('online_home'))
-    
+        new_game = OnlineGame(
+            timestamp=datetime.utcnow().isoformat(),
+            xPASS=xPASS,
+            oPASS=oPASS,
+            board=game_board
+        )
+
+        db.session.add(new_game)
+        db.session.commit()
+
+        session['newly_created_id'] = new_game.id
+
+        return redirect(url_for('online_home'))
+
     abort(401)
 
 
@@ -202,47 +222,37 @@ def online_game():
     if 'active_online_id' not in session:
         return redirect(url_for('online_home'))
     
-    with connect(app.db) as db_connect:
-        cursor = db_connect.cursor()
-        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
-    
-    game = list(query)
-    assert len(game) == 1, 'Unable to get game #{}'.format(session['active_online_id'])
-    game = game[0]
+    game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
+    assert game, 'Unable to get game #{}'.format(session['active_online_id'])
 
     if session['online_player'] == 'X':
-        assert bcrypt.check_password_hash(game[1], session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
+        assert bcrypt.check_password_hash(game.xPASS, session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
     else:
-        assert bcrypt.check_password_hash(game[2], session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
+        assert bcrypt.check_password_hash(game.oPASS, session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
     
-    board = BigBoard.from_json(game[3])
+    board = BigBoard.from_json(game.board)
 
     if board.is_over():
         return render_template('game-over.html', board=board.get_board(), winner=board.check_winner())
     elif board.get_turn() != session['online_player']:
         return render_template('online-game.html', board=board.get_board(), turn=board.get_turn(),
-                                            valid=[], choice=board.is_choosing(), wait=True, game_id=game[0])
+                                            valid=[], choice=board.is_choosing(), wait=True, game_id=game.id)
     else:
         return render_template('online-game.html', board=board.get_board(), turn=board.get_turn(),
-                                            valid=board.get_valid_moves(), choice=board.is_choosing(), wait=False, game_id=game[0])
+                                            valid=board.get_valid_moves(), choice=board.is_choosing(), wait=False, game_id=game.id)
 
 
 @app.route('/online/play/<int:board_row>/<int:board_col>/<int:row>/<int:col>')
-def online_play(board_row, board_col, row, col):
-    with connect(app.db) as db_connect:
-        cursor = db_connect.cursor()
-        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
-    
-    game = list(query)
-    assert len(game) == 1, 'Unable to get game #{}'.format(session['active_online_id'])
-    game = game[0]
+def online_play(board_row, board_col, row, col):    
+    game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
+    assert game, 'Unable to get game #{}'.format(session['active_online_id'])
 
     if session['online_player'] == 'X':
-        assert bcrypt.check_password_hash(game[1], session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
+        assert bcrypt.check_password_hash(game.xPASS, session['online_pass']), 'Wrong password for player X in game #{}!'.format(session['active_online_id'])
     else:
-        assert bcrypt.check_password_hash(game[2], session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
+        assert bcrypt.check_password_hash(game.oPASS, session['online_pass']), 'Wrong password for player O in game #{}!'.format(session['active_online_id'])
 
-    board = BigBoard.from_json(game[3])
+    board = BigBoard.from_json(game.board)
 
     assert session['online_player'] == board.get_turn(), 'Not your turn to move...'
     
@@ -255,39 +265,27 @@ def online_play(board_row, board_col, row, col):
     if (small in valid_moves) and ((row, col) in valid_moves[small]):
         board.make_move(board_row, board_col, row, col)
     
-    new_board = board.to_json()
-    with connect(app.db) as db_connect:
-        cursor = db_connect.cursor()
-        cursor.execute('UPDATE GAMES SET board = ? WHERE id=?;', (new_board, game[0]))
+    game.board = board.to_json()
+    db.session.commit()
 
     return redirect(url_for('online_game'))
 
 
 @app.route('/online/play-by-play')
 def online_move_history():
-    with connect(app.db) as db_connect:
-        cursor = db_connect.cursor()
-        query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
-    
-    game = list(query)
-    if len(game) == 1:
-        moves = BigBoard.from_json(game[0][3]).get_move_history()
-    else:
-        moves = []
+    game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
+    assert game, 'Unable to get game #{}'.format(session['active_online_id'])
+    moves = BigBoard.from_json(game.board).get_move_history()
     return render_template('online-play-by-play.html', moves=moves)
 
 
 @app.route('/online/save-game')
 def online_save_game():
     if "active_online_id" in session:
-        with connect(app.db) as db_connect:
-            cursor = db_connect.cursor()
-            query = cursor.execute(f'SELECT * FROM GAMES WHERE id={session["active_online_id"]};')
+        game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
+        assert game, 'Unable to get game #{}'.format(session['active_online_id'])
         
-        game = list(query)
-        assert len(game) == 1, 'Unable to get game #{}'.format(session["active_online_id"])
-        
-        moves = BigBoard.from_json(game[0][3]).get_move_history()
+        moves = BigBoard.from_json(game.board).get_move_history()
         
         if moves:
             export = {'ai': session.get('ai', False),
