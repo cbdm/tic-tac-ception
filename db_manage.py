@@ -6,8 +6,8 @@ Date Modified: 2021-01-30
 Description: Manages DB migrations.
 """
 
-from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+from flask_script import Manager
 from game import app, db
 
 migrate = Migrate(app, db)

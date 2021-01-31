@@ -7,8 +7,9 @@ Description: Read generated games and creates a feature set.
 """
 
 import argparse
-import numpy as np
 from json import load
+
+import numpy as np
 from bigboard import BigBoard
 
 

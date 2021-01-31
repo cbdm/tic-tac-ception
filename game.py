@@ -6,26 +6,27 @@ Date Modified: 2021-01-30
 Description: Sets up the flask server that allows playing the game.
 """
 
+from datetime import datetime
+from json import dumps, load
+from os import getenv
+
 from flask import (
     Flask,
+    abort,
+    flash,
+    make_response,
     redirect,
     render_template,
+    request,
     session,
     url_for,
-    make_response,
-    request,
-    flash,
-    abort,
 )
+from werkzeug.exceptions import HTTPException
+
+from ai_options import choose_move
+from bigboard import BigBoard
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.exceptions import HTTPException
-from json import load, dumps
-from bigboard import BigBoard
-from ai_options import choose_move
-from os import getenv
-from os.path import exists
-from datetime import datetime
 
 
 class ReverseProxied(object):
@@ -164,7 +165,7 @@ def load_game():
                     big_row, big_col, sm_row, sm_col = move
                     new_game.make_move(big_row, big_col, sm_row, sm_col)
                 session["board"] = new_game.to_json()
-        except:
+        except Exception:
             message = "Could not load the game."
             flash(message, "danger")
 

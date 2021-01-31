@@ -7,6 +7,7 @@ Description: Defines the different types of AI available.
 """
 
 from random import choice
+
 from bigboard import BigBoard
 
 
