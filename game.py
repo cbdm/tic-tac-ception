@@ -369,9 +369,11 @@ def online_play(board_row, board_col, row, col):
 
 @app.route("/online/play-by-play")
 def online_move_history():
-    game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
-    assert game, "Unable to get game #{}".format(session["active_online_id"])
-    moves = BigBoard.from_json(game.board).get_move_history()
+    moves = []
+    if "active_online_id" in session:
+        game = OnlineGame.query.filter_by(id=session["active_online_id"]).first()
+        assert game, "Unable to get game #{}".format(session["active_online_id"])
+        moves = BigBoard.from_json(game.board).get_move_history()
     return render_template("online-play-by-play.html", moves=moves)
 
 
