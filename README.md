@@ -1,6 +1,6 @@
 # Tic-Tac-Ception
 
-![Logo](static/Tic-Tac-Ception_Logo.png?raw=true "Title")
+![Logo](src/static/Tic-Tac-Ception_Logo.png?raw=true "Title")
 
 This is a game of Tic-Tac-Toes within a Tic-Tac-Toe!  
 You can play the game at [www.tic-tac-ception.com](https://www.tic-tac-ception.com)
