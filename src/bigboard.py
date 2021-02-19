@@ -103,12 +103,13 @@ class BigBoard(object):
                 self._winner = m.pop()
                 return self._winner
 
-        # Check if all small boards are over, if they are, the winner is whoever has the most small wins.
+        # Check if all small boards are over.
+        # If they are, the winner is whoever has the most small wins.
         over = (self._board[i][j].is_over() for j in range(3) for i in range(3))
         if all(over):
             count = 0
             for row in small_wins:
-                for win in small_wins:
+                for win in row:
                     if win == self._players[0]:
                         count -= 1
                     elif win == self._players[1]:
