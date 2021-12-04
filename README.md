@@ -28,4 +28,4 @@ Like a regular tic-tac-toe, the game ends when there is (1) a winner or (2) all 
 Thanks to Brian for introducing me to this game and Kenneth for suggesting the name!
 
 ### Say hi :)
-[mail@tic-tac-ception.com](mailto:mail@tic-tac-ception.com)
+[hi@tic-tac-ception.com](mailto:hi@tic-tac-ception.com)
