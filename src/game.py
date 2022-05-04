@@ -407,6 +407,11 @@ def online_save_game():
     return redirect(url_for("online_game"))
 
 
+@app.route("/code/")
+def source_code():
+    return redirect('https://github.com/cbdm/tic-tac-ception')
+
+
 @app.errorhandler(Exception)
 def not_found(exc):
     code = exc.code if isinstance(exc, HTTPException) else 500
