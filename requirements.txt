@@ -16,7 +16,7 @@ gunicorn==20.0.4
 identify==1.5.13
 importlib-metadata==2.0.0
 itsdangerous==1.1.0
-Jinja2==2.11.2
+Jinja2>=2.11.3
 jsonpickle==1.4.1
 Mako==1.1.4
 MarkupSafe==1.1.1
