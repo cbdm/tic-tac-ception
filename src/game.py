@@ -27,7 +27,8 @@ from ai_options import choose_move
 from bigboard import BigBoard
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-
+from pymysql import install_as_MySQLdb
+install_as_MySQLdb()
 
 class ReverseProxied(object):
     def __init__(self, app):
@@ -43,7 +44,14 @@ app.secret_key = getenv(
     "SECRET_KEY",
     b"\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180",
 )
-app.config["SQLALCHEMY_DATABASE_URI"] = getenv("DATABASE_URL", "postgresql:///games_db")
+db_config = {
+    'host': getenv('DB_HOST', 'localhost'),
+    'port': getenv('DB_PORT', '3306'),
+    'user': getenv('DB_USER', 'user'),
+    'passwd': getenv('DB_PASS', 'pass'),
+    'database': getenv('DB_NAME', 'db')
+}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{user}:{passwd}@{host}:{port}/{database}'.format(**db_config)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 if getenv("SECRET_KEY", None) is not None:  # Check if developing locally
     app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -56,11 +64,11 @@ class OnlineGame(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)  # Game ID
     timestamp = db.Column(
-        db.String()
+        db.Text
     )  # Timestamp of game creation (datetime.utcnow().isoformat())
-    xPASS = db.Column(db.String())  # Hashed password for player X
-    oPASS = db.Column(db.String())  # Hashed password for player O
-    board = db.Column(db.String())  # Current game board
+    xPASS = db.Column(db.Text)  # Hashed password for player X
+    oPASS = db.Column(db.Text)  # Hashed password for player O
+    board = db.Column(db.Text)  # Current game board
 
     def __init__(self, timestamp, xPASS, oPASS, board):
         self.timestamp = timestamp
