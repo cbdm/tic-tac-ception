@@ -28,7 +28,9 @@ from bigboard import BigBoard
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from pymysql import install_as_MySQLdb
+
 install_as_MySQLdb()
+
 
 class ReverseProxied(object):
     def __init__(self, app):
@@ -45,13 +47,15 @@ app.secret_key = getenv(
     b"\x81^\xaaq\\\x83\x0f4\xf2\x9d\xd7\x08\x12\x0bA\x1a\tVD\x96>\xf3\x180",
 )
 db_config = {
-    'host': getenv('DB_HOST', 'localhost'),
-    'port': getenv('DB_PORT', '3306'),
-    'user': getenv('DB_USER', 'user'),
-    'passwd': getenv('DB_PASS', 'pass'),
-    'database': getenv('DB_NAME', 'db')
+    "host": getenv("DB_HOST", "localhost"),
+    "port": getenv("DB_PORT", "3306"),
+    "user": getenv("DB_USER", "user"),
+    "passwd": getenv("DB_PASS", "pass"),
+    "database": getenv("DB_NAME", "db"),
 }
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://{user}:{passwd}@{host}:{port}/{database}'.format(**db_config)
+app.config[
+    "SQLALCHEMY_DATABASE_URI"
+] = "mysql://{user}:{passwd}@{host}:{port}/{database}".format(**db_config)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 if getenv("SECRET_KEY", None) is not None:  # Check if developing locally
     app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -417,7 +421,7 @@ def online_save_game():
 
 @app.route("/code/")
 def source_code():
-    return redirect('https://github.com/cbdm/tic-tac-ception')
+    return redirect("https://github.com/cbdm/tic-tac-ception")
 
 
 @app.errorhandler(Exception)

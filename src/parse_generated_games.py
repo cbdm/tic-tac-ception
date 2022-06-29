@@ -20,7 +20,7 @@ def rate_moves(player_moves, outcome):
 def convert_board_to_int(small_board):
     num = 0
     for i in range(len(small_board)):
-        power = 3 ** i
+        power = 3**i
         num += small_board[-1 - i] * power
     return num
 
