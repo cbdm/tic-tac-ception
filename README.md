@@ -1,4 +1,4 @@
-# Tic-Tac-Ception [![Better Uptime Badge](https://betteruptime.com/status-badges/v1/monitor/f8wc.svg)](https://status.cbdm.app/)
+# Tic-Tac-Ception [![Better Uptime Badge](https://betteruptime.com/status-badges/v1/monitor/f8wg.svg)](https://status.cbdm.app/)
 
 ![Logo](src/static/Tic-Tac-Ception_Logo.png)
 
