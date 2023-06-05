@@ -1,9 +1,9 @@
-# Tic-Tac-Ception [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/f8wg.svg)](https://status.cbdm.app/)
+# Tic-Tac-Ception
 
 ![Logo](src/static/Tic-Tac-Ception_Logo.png)
 
 This is a game of Tic-Tac-Toes within a Tic-Tac-Toe!  
-You can play the game at [tic-tac-ception.cbdm.app](https://tic-tac-ception.cbdm.app)
+You can play the game at [tic-tac-ception.cbdm.app](https://tic-tac-ception.cbdm.app) and you can check the service status at [status.cbdm.app](https://status.cbdm.app/).
 
 ## How to play
 ### Basic flow
